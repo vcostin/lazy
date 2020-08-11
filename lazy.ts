@@ -81,12 +81,11 @@ function toList<T>(xs: T[]): LazyList<T> {
     return () => {
         if (xs.length === 0) {
             return null;
-        } else {
-            return {
-                head: () => xs[0],
-                tail: toList(xs.slice(1))
-            };
         }
+        return {
+            head: () => xs[0],
+            tail: toList(xs.slice(1))
+        };
     };
 }
 
@@ -135,13 +134,13 @@ function take<T>(n: Lazy<number>, xs: LazyList<T>): LazyList<T> {
     return () => {
         let m = n();
         let pair = xs();
-        if (m > 0 && pair !== null) {
-            return {
-                head: pair.head,
-                tail: take(() => m - 1, pair.tail)
-            }
-        } else {
+        if (m <= 0 || pair === null) {
             return null;
+        }
+
+        return {
+            head: pair.head,
+            tail: take(() => m - 1, pair.tail)
         }
     };
 }
@@ -153,17 +152,16 @@ function filter<T>(f: (x: T) => boolean, xs: LazyList<T>): LazyList<T> {
         let pair = xs();
         if (pair === null) {
             return null;
-        } else {
-            let x = pair.head();
-            if (f(x)) {
-                return {
-                    head: () => x,
-                    tail: filter(f, pair.tail)
-                };
-            } else {
-                return filter(f, pair.tail)();
-            }
         }
+        let x = pair.head();
+        if (!f(x)) {
+            return filter(f, pair.tail)();
+        }
+        return {
+          head: () => x,
+          tail: filter(f, pair.tail),
+        };
+
     };
 }
 
@@ -182,13 +180,12 @@ function sieve(xs: LazyList<number>): LazyList<number> {
         let pair = xs();
         if (pair === null) {
             return null;
-        } else {
-            let y = pair.head();
-            return {
-                head: () => y,
-                tail: sieve(filter((x) => x % y !== 0, pair.tail))
-            };
         }
+        let y = pair.head();
+        return {
+            head: () => y,
+            tail: sieve(filter((x) => x % y !== 0, pair.tail))
+        };
     };
 }
 
